@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NestJS API Test Client</title>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <style>
+      *{
+        box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+      }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            box-sizing: border-box;
+            -webkit-box-sizing: border-box;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            /* display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px; */
+        }
+        .custom-row {
+            display: flex;
+            align-items: stretch;
+            gap: 20px;
+            justify-content: stretch;
+        }
+        /* .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        } */
+        /* .full-width {
+            grid-column: span 2;
+        } */
+        /* input, button {
+            margin: 5px 0;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        } */
+       .btn-theme {
+            background: #007bff;
+            display: inline-block;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 8px 20px;
+            min-width: 120px;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.5s ease 0s;
+            -webkit-transition: all 0.5s ease 0s;
+        }
+        .btn-theme:hover {
+            background-color: #0056b3;
+        }
+        .btn-disconnect {
+            background: #f30909 !important;
+        }
+        .btn-disconnect:hover{
+          background: #c00 !important;
+        }
+        .log {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .product-card {
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .product-card h4 {
+            margin: 0 0 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .product-card p {
+            margin: 0 0 10px;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 22px;
+            color: #333;
+        }
+        .product-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .product-footer {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              font-size: 14px;
+              color: #444;
+          }
+          .pro-price, .qty {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+          }
+          .product-footer small {
+              font-weight: 700;
+              font-size: 12px;
+          }
+          h4.pro-sub-title {
+              margin: 30px 0 15px 0;
+              font-size: 16px;
+          }
+          h4.pro-sub-title span {
+              display: inline-block;
+              font-size: 12px;
+              font-weight: 400;
+          }
+        .product-card:hover {
+            background: #e3f2fd;
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .product-card.selected {
+            background: #bbdefb;
+            border-color: #2196f3;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        #activities {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+       .col-6, .col-4, .col-12 {
+            display: block;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          }
+          .col-6{
+            width:50%;
+          }
+        .col-4 {
+            width: 33.33%;
+        }
+        .col-12{
+          width: 100%;
+
+        }
+        .col-6 h3, .col-4 h3 {
+            margin: 0 0 15px;
+            color: #636363;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .col-6 span {
+            font-size: 36px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .sectio-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .formControls {
+            display: block;
+            width: 100%;
+            height: 38px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #000;
+            padding: 10px 12px;
+        }
+        .websocket-footer {
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        h2.main-title {
+            color: #000;
+            font-weight: 700;
+            font-size: 24px;
+            margin: 30px 0 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <h2 class="main-title">Real-time Dashboard</h2>
+            <div class="custom-row">
+                <div class="col-6">
+                    <h3>Active Users</h3>
+                    <span id="activeUsers">0</span>
+                </div>
+                <div class="col-6">
+                    <h3>Connected Clients</h3>
+                    <span id="connectedClients">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 class="main-title">Authentication</h2>
+            <div class="custom-row">
+            <div class="col-6">
+                <h3>Register</h3>
+                <input class="formControls" type="email" id="regEmail" placeholder="Email" required>
+                <input class="formControls" type="text" id="regUsername" placeholder="Username" required minlength="3" maxlength="50">
+                <input
+                 class="formControls"
+                  type="password"
+                  id="regPassword"
+                  placeholder="Password"
+                  required
+                  minlength="8"
+                  pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}"
+                  title="Min 8 chars, at least 1 uppercase, 1 lowercase, and 1 number"
+                >
+                <button class="btn-theme" onclick="register()">Register</button>
+            </div>
+            <div class="col-6">
+                <h3>Login</h3>
+                <input class="formControls" type="email" id="loginEmail" placeholder="Email" required>
+                <input class="formControls" type="password" id="loginPassword" placeholder="Password" required minlength="8">
+                <button class="btn-theme" onclick="login()">Login</button>
+            </div>
+            </div>
+            <div id="authResult"></div>
+        </div>
+
+        <div class="section">
+            <div class="sectio-title">
+              <h2 class="main-title">Products</h2>
+              <button class="btn-theme" onclick="getProducts()">Get All Products</button>
+             </div>
+            <div class="custom-row">
+              <div class="col-4">
+                  <h3>Create Product</h3>
+                  <input class="formControls" type="text" id="productName" placeholder="Product Name" required maxlength="120">
+                  <input class="formControls" type="text" id="productDescription" placeholder="Description" required maxlength="500">
+                  <input class="formControls" type="number" id="productPrice" placeholder="Price" required min="0" step="0.01" inputmode="decimal">
+                  <input class="formControls" type="number" id="productQuantity" placeholder="Quantity" required min="0" step="1" inputmode="numeric">
+                  <button class="btn-theme" onclick="createProduct()">Create Product</button>
+              </div>
+              <div class="col-4">
+                  <h3>Update Product</h3>
+                  <input type="hidden" id="updateProductId">
+                  <input class="formControls" type="text" id="updateProductName" placeholder="New Name (optional)">
+                  <input class="formControls" type="text" id="updateProductDescription" placeholder="New Description (optional)">
+                  <input class="formControls" type="number" id="updateProductPrice" placeholder="New Price (optional)">
+                  <input class="formControls" type="number" id="updateProductQuantity" placeholder="New Quantity (optional)">
+                  <button class="btn-theme" onclick="updateProduct()">Update Product</button>
+                  <small id="updateProductHint" style="color: #666; display: block; margin-top: 5px;">Click a product card above to select it for editing</small>
+              </div>
+              <div class="col-4">
+                  <h3>Delete Product</h3>
+                  <input class="formControls" type="text" id="deleteProductId" placeholder="Product ID" required>
+                  <button class="btn-theme" onclick="deleteProduct()">Delete Product</button>
+              </div>
+            </div>
+           
+            <div id="productResult">
+              
+            </div>
+        </div>
+
+     
+
+        <div class="section">
+            <h2 class="main-title">WebSocket Events</h2>
+            <div class="col-12">
+              <div id="socketStatus">Disconnected</div>
+              <div id="socketEvents"></div>
+              <div class="websocket-footer">
+                <button class="btn-theme" onclick="connectSocket()">Connect</button>
+                <button class="btn-theme btn-disconnect" onclick="disconnectSocket()">Disconnect</button>
+              </div>
+            </div>
+        </div>
+        <div class="section"> 
+            <h2 class="main-title">Recent Activities</h2>
+            <div class="col-12">
+              <div id="activities"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let authToken = localStorage.getItem('authToken');
+        const API_URL = 'http://localhost:3000';
+
+        async function register() {
+            const email = document.getElementById('regEmail').value;
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, username, password })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    showAuthResult('Registration successful!', 'success');
+                } else {
+                    showAuthResult(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showAuthResult(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    showAuthResult('Login successful!', 'success');
+                    
+                    document.getElementById('loginEmail').value = '';
+                    document.getElementById('loginPassword').value = '';
+                    
+                    document.getElementById('deleteProductId').value = '';
+                } else {
+                    showAuthResult(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showAuthResult(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function createProduct() {
+            if (!authToken) {
+                showProductResult('Please login first', 'error');
+                return;
+            }
+
+            const name = document.getElementById('productName').value;
+            const description = document.getElementById('productDescription').value;
+            const price = parseFloat(document.getElementById('productPrice').value);
+            const quantity = parseInt(document.getElementById('productQuantity').value);
+
+            try {
+                const response = await fetch(`${API_URL}/products`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ name, description, price, quantity })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    showProductResult('Product created successfully!', 'success');
+                    document.getElementById('productName').value = '';
+                    document.getElementById('productDescription').value = '';
+                    document.getElementById('productPrice').value = '';
+                    document.getElementById('productQuantity').value = '';
+                } else {
+                    showProductResult(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showProductResult(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        let productsData = [];
+
+        async function getProducts() {
+            try {
+               const response = await fetch(`${API_URL}/products`);
+              const products = await response.json();
+              productsData = products;
+
+              let html = '<h4 class="pro-sub-title">Products <span> (Click to edit/delete):<span> </h4>';
+
+              html += `<div class="custom-row">`;
+
+              products.forEach((product, index) => {
+                  html += `
+                      <div class="product-card col-4" onclick="fillProductForm(${index})">
+                          <h4>${product.name}</h4>
+                          <p>${product.description || ''}</p>
+                          <div class="product-footer">
+                          <div class="pro-price"><small>Price</small> $${product.price}</div>
+                          <div class="qty"><small>Qty</small> ${product.quantity}</div>
+                          </div>
+                      </div>
+                  `;
+              });
+
+              html += `</div>`;
+
+                
+                document.getElementById('productResult').innerHTML = html;
+            } catch (error) {
+                showProductResult(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        function fillProductForm(index) {
+            const product = productsData[index];
+            if (!product) return;
+            
+            document.getElementById('updateProductId').value = product._id;
+            document.getElementById('updateProductName').value = product.name || '';
+            document.getElementById('updateProductDescription').value = product.description || '';
+            document.getElementById('updateProductPrice').value = product.price || '';
+            document.getElementById('updateProductQuantity').value = product.quantity || '';
+            
+            document.getElementById('updateProductHint').textContent = `Editing: ${product.name} (ID: ${product._id})`;
+            document.getElementById('updateProductHint').style.color = '#007bff';
+            
+            document.getElementById('deleteProductId').value = product._id;
+            
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(card => card.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            
+            document.getElementById('updateProductName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function connectSocket() {
+            socket = io(API_URL);
+            
+            socket.on('connect', () => {
+                updateSocketStatus('Connected');
+                socket.emit('requestDashboardUpdate');
+            });
+            
+            socket.on('disconnect', () => {
+                updateSocketStatus('Disconnected');
+            });
+            
+            socket.on('dashboardUpdate', (data) => {
+                document.getElementById('activeUsers').textContent = data.activeUsers;
+                document.getElementById('connectedClients').textContent = data.connectedClients;
+                addSocketEvent('Dashboard updated');
+            });
+            
+            socket.on('productCreated', (data) => {
+                addSocketEvent(`New product created: ${data.product.name}`);
+                addActivity(`Product "${data.product.name}" created`);
+            });
+            
+            socket.on('liveActivity', (data) => {
+                addActivity(data.activity);
+            });
+        }
+
+        function disconnectSocket() {
+            if (socket) {
+                socket.disconnect();
+            }
+        }
+
+        async function updateProduct() {
+            if (!authToken) {
+                showProductResult('Please login first', 'error');
+                return;
+            }
+
+            const id = document.getElementById('updateProductId').value.trim();
+            if (!id) {
+                showProductResult('Please select a product by clicking on it first', 'error');
+                return;
+            }
+
+            const name = document.getElementById('updateProductName').value || undefined;
+            const description = document.getElementById('updateProductDescription').value || undefined;
+            const priceValue = document.getElementById('updateProductPrice').value;
+            const quantityValue = document.getElementById('updateProductQuantity').value;
+
+            const body = {
+                ...(name ? { name } : {}),
+                ...(description ? { description } : {}),
+                ...(priceValue ? { price: parseFloat(priceValue) } : {}),
+                ...(quantityValue ? { quantity: parseInt(quantityValue) } : {}),
+            };
+
+            if (Object.keys(body).length === 0) {
+                showProductResult('Provide at least one field to update', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/products/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showProductResult('Product updated successfully!', 'success');
+                    
+                    document.getElementById('updateProductId').value = '';
+                    document.getElementById('updateProductName').value = '';
+                    document.getElementById('updateProductDescription').value = '';
+                    document.getElementById('updateProductPrice').value = '';
+                    document.getElementById('updateProductQuantity').value = '';
+                    document.getElementById('updateProductHint').textContent = 'Click a product card above to select it for editing';
+                    document.getElementById('updateProductHint').style.color = '#666';
+                    
+                    document.getElementById('deleteProductId').value = '';
+                    
+                    document.querySelectorAll('.product-card').forEach(card => card.classList.remove('selected'));
+                    getProducts();
+                } else {
+                    showProductResult(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showProductResult(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteProduct() {
+            if (!authToken) {
+                showProductResult('Please login first', 'error');
+                return;
+            }
+
+            const id = document.getElementById('deleteProductId').value.trim();
+            if (!id) {
+                showProductResult('Product ID is required to delete', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/products/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    showProductResult('Product deleted successfully!', 'success');
+                    
+                    document.getElementById('deleteProductId').value = '';
+                    
+                    if (document.getElementById('updateProductId').value === id) {
+                        document.getElementById('updateProductId').value = '';
+                        document.getElementById('updateProductName').value = '';
+                        document.getElementById('updateProductDescription').value = '';
+                        document.getElementById('updateProductPrice').value = '';
+                        document.getElementById('updateProductQuantity').value = '';
+                        document.getElementById('updateProductHint').textContent = 'Click a product card above to select it for editing';
+                        document.getElementById('updateProductHint').style.color = '#666';
+                    }
+                    
+                    document.querySelectorAll('.product-card').forEach(card => card.classList.remove('selected'));
+                    getProducts();
+                } else {
+                    const data = await response.json();
+                    showProductResult(`Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showProductResult(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        
+        function showAuthResult(message, type) {
+            document.getElementById('authResult').innerHTML = 
+                `<div class="log ${type}">${message}</div>`;
+        }
+
+        function showProductResult(message, type) {
+            document.getElementById('productResult').innerHTML = 
+                `<div class="log ${type}">${message}</div>`;
+        }
+
+        function updateSocketStatus(status) {
+            const element = document.getElementById('socketStatus');
+            element.textContent = status;
+            element.className = status === 'Connected' ? 'success' : 'error';
+        }
+
+        function addSocketEvent(message) {
+            const element = document.getElementById('socketEvents');
+            element.innerHTML = `<div class="log">${new Date().toLocaleTimeString()} - ${message}</div>` 
+                + element.innerHTML;
+        }
+
+        function addActivity(activity) {
+            const element = document.getElementById('activities');
+            element.innerHTML = `<div class="log">${new Date().toLocaleTimeString()} - ${activity}</div>` 
+                + element.innerHTML;
+            
+            while (element.children.length > 10) {
+                element.removeChild(element.lastChild);
+            }
+        }
+
+        window.onload = () => {
+            if (authToken) {
+                showAuthResult('Using saved authentication token', 'success');
+            }
+            connectSocket();
+        };
+    </script>
+</body>
+</html>
